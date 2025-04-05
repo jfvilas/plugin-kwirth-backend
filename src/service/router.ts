@@ -20,7 +20,7 @@ import { CatalogClient } from '@backstage/catalog-client'
 import { UserEntity } from '@backstage/catalog-model'
 import { FetchApi } from '@backstage/core-plugin-api'
 
-// Kwirthbackstage
+// Kwirth
 import { ClusterValidPods, PodData } from '@jfvilas/plugin-kwirth-common'
 import { loadClusters } from './config'
 import { KwirthStaticData, VERSION } from '../model/KwirthStaticData'
@@ -42,7 +42,7 @@ export type KwirthRouterOptions = {
 
 /**
  * 
- * @param options core services we need for Kwirthbackstage to work
+ * @param options core services we need for Kwirth to work
  * @returns an express Router
  */
 async function createRouter(options: KwirthRouterOptions) : Promise<express.Router> {
@@ -51,8 +51,8 @@ async function createRouter(options: KwirthRouterOptions) : Promise<express.Rout
     loggerSvc.info('Loading static config')
 
     if (!configSvc.has('kubernetes.clusterLocatorMethods')) {
-        loggerSvc.error(`Kwirthbackstage will not start, there is no 'clusterLocatorMethods' defined in app-config.`)
-        throw new Error('Kwirthbackstage backend will not be available.')
+        loggerSvc.error(`Kwirth will not start, there is no 'clusterLocatorMethods' defined in app-config.`)
+        throw new Error('Kwirth backend will not be available.')
     }
 
     try {
@@ -68,7 +68,7 @@ async function createRouter(options: KwirthRouterOptions) : Promise<express.Rout
     if (configSvc.subscribe) {
         configSvc.subscribe( () => {
             try {
-                loggerSvc.warn('Change detected on app-config, Kwirthbackstage will update config.')
+                loggerSvc.warn('Change detected on app-config, Kwirth will update config.')
                 loadClusters(loggerSvc, configSvc)
             }
             catch(err) {
@@ -77,7 +77,7 @@ async function createRouter(options: KwirthRouterOptions) : Promise<express.Rout
         })
     }
     else {
-        loggerSvc.info('Kwirthbackstage cannot subscribe to config changes.')
+        loggerSvc.info('Kwirth cannot subscribe to config changes.')
     }
 
     const router = Router()
@@ -152,8 +152,6 @@ async function createRouter(options: KwirthRouterOptions) : Promise<express.Rout
         var fetchResp=await fetch(kwirthHome+'/key',{method:'POST', body:JSON.stringify(payload), headers:{'Content-Type':'application/json', Authorization:'Bearer '+kwirthApiKey}})
         if (fetchResp.status===200) {
             var data = await fetchResp.json();
-            console.log('data')
-            console.log(data)
             return data.accessKey
         }
         else {
@@ -203,8 +201,6 @@ async function createRouter(options: KwirthRouterOptions) : Promise<express.Rout
             }
             if (podList.length>0) {
                 let accessKey = await createAccessKey(reqScope, foundCluster, podList, username)
-                console.log('accessKey')
-                console.log(accessKey)
                 foundCluster.accessKeys.set(reqScope, accessKey)
             }
             else {
@@ -261,7 +257,7 @@ async function createRouter(options: KwirthRouterOptions) : Promise<express.Rout
         //+++ control errors here (maybe we cannot conntact the cluster, for example)
         let foundClusters:ClusterValidPods[]=await getValidClusters(req.body.metadata.name)
 
-        // add access keys to authorized resources (according to group membership and Kwirthbackstage config in app-config (namespace and pod permissions))
+        // add access keys to authorized resources (according to group membership and Kwirth config in app-config (namespace and pod permissions))
         for (var reqScopeStr of reqScopes) {
             var reqScope = reqScopeStr as InstanceConfigScopeEnum
             await addAccessKeys(reqChannel, reqScope, foundClusters, req.body.metadata.name, userInfo.userEntityRef, userGroupsRefs)

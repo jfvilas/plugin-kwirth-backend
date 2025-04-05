@@ -22,7 +22,7 @@ import { KwirthData, versionGreatOrEqualThan } from '@jfvilas/kwirth-common'
 
 /**
  * loads Namespace Permissions setting from app-config xml
- * @param block name of the Kwirthbackstage block te read ('chart', 'log', 'audit'...)
+ * @param block name of the Kwirth block te read ('chart', 'log', 'audit'...)
  * @param logger Logger service
  */
 const loadNamespacePermissions = (block:Config, logger:LoggerService):KwirthNamespacePermissions[] => {
@@ -75,7 +75,7 @@ const loadPodRules = (config:Config, category:string):PodPermissionRule[] => {
 }
 
 /**
- * loads pod permissions (namespace and pod) for a specific Kwirthbackstage block
+ * loads pod permissions (namespace and pod) for a specific Kwirth block
  * @param block then name of the key (inside app-config) to read config from
  * @param logger Logger service
  * @returns an array of pod permissions
@@ -111,11 +111,11 @@ const loadPodPermissions = (block:Config, logger:LoggerService):KwirthPodPermiss
 }
 
 /**
- * Reads permissions for a kwirthbackstage block (like log, metrics...)
+ * Reads permissions for a kwirth block (like log, metrics...)
  * @param channel name of the block
  * @param logger bs logger service
  * @param cluster the app-config object containing the cluster to process
- * @param kdata current KwirthbackstageClusterData object to add block permissions
+ * @param kdata current KwirthClusterData object to add block permissions
  */
 const addChannelPermissions = (channel: string, logger:LoggerService, cluster:Config, kdata:KwirthClusterData) => {
     var keyName = 'kwirth'+channel
@@ -250,7 +250,7 @@ const loadClusters = async (logger:LoggerService, config:RootConfigService) => {
       }
     }
 
-    logger.info('Kwirthbackstage static data has been set including following clusters:')
+    logger.info('Kwirth static data has been set including following clusters:')
     for (var c of KwirthStaticData.clusterKwirthData.keys()) {
         logger.info ('  '+c)
     }

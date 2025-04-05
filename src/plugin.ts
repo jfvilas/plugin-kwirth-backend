@@ -17,7 +17,7 @@ import { coreServices, createBackendPlugin } from '@backstage/backend-plugin-api
 import { createRouter } from './service/router'
 
 export const kwirthPlugin = createBackendPlugin({
-    pluginId: 'kwirthbackstage',
+    pluginId: 'kwirth',
     register(env) {
         env.registerInit({
             deps: {
