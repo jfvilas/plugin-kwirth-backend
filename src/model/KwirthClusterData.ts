@@ -53,7 +53,7 @@ export type PodPermissionRule = {
 }
 
 /**
- * @type KubelogNamespacedPodPermissions is the whole permissions that must be checked for a pod access in order to execute an action (view, restart...)
+ * @type KwirthPodPermissions is the whole permissions that must be checked for a pod access in order to execute an action (view, restart...)
  * @field namespace is the namespace where this permission set must be applied (permissions maybe different for different namespaces, obviously)
  * @field allow: at least un rule in the allow must be fulfilled for the user to have access to the pod
  * @field except: if, after processsing 'allow', a rule in the except set evaluates to false the access is not allowed

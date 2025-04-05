@@ -114,14 +114,6 @@ const getPodPermissionSet = (channel:string, cluster:KwirthClusterData) => {
  * @returns booelan indicating if the user can access the pod for doing what scaope says (view or restart)
  */
 
-// const checkPodAccess = (loggerSvc:LoggerService, reqCluster:ClusterValidPods, reqPod:PodData, podPermissionSet:KubelogPodPermissions[], entityName:string, userEntityRef:string, userGroups:string[]):boolean => {
-//     var cluster = KubelogStaticData.clusterKubelogData.get(reqCluster.name)
-
-//     if (!cluster) {
-//         loggerSvc.warn(`Invalid cluster specified ${reqCluster.name}`)
-//         return false
-//     }
-
 const checkPodAccess = (reqPod:PodData, podPermissionSet:KwirthPodPermissions[], entityName:string, userEntityRef:string, userGroups:string[]):boolean => {
     // we check all pod permissions until one of them evaluates to true (must be true on allow/except and false on deny/unless)
 
