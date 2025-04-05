@@ -2,7 +2,7 @@
 This Backstage plugin is the backend for several Kwirth plugins that we have developed for integrating live streaming Kubernetes information into Backstage by using Kwirth. It's important to understand that **Kwirth provides different kinds of information** (log, metrics, events...), and due to this way of working, the whole set of Backstage Kwirth plugins are comprised by:
 
   - One only backend plugin (**this one**).
-  - Several frontend plugins, each one including its own features. Typically, there sould exist one Backstage Kwirth frontend plugin for each Kwirth supported channel (please refer to information on Kwirth channels here [Kwirth Cahnnels](https://github.com/jfvilas/kwrith#channels)).
+  - Several frontend plugins, each one including its own features. Typically, there sould exist one Backstage Kwirth frontend plugin for each Kwirth supported channel (please refer to information on Kwirth channels here [Kwirth Channels](https://github.com/jfvilas/kwrith#channels)).
 
 **NOTE: Backstage Kwirth plugins requires a Kwirth server running on Kubernetes whose version is at least 0.3.155**
 
@@ -50,7 +50,7 @@ We will not cover this subject here, we refer you to [Kwirth installation docume
 3. Kwirth provides user management, API security and multi-cluster access.
 4. Kwirth can export **kubernets data in real-time** wherever you need it.
 
-### 2. Kwirth customization
+### 2. Kwirth server customization
 Once you have a Kubernetes cluster with a Kwirth installation in place (in order to export kuberntes data, Kwirth must be accesible from outside your cluster, so you will need to install any flavour of Ingress Controller and an Ingress for publishing Kwirth access). Please **write down your Kwirth external access** (we will need it for configuring Kwirth plugin). For simplifying reading of this tutorial we will assume your Kwirth is published on: **http://your-external.dns.name/kwirth**.
 
 Once Kwirth is running, you need to enter Kwirth front application to perform two simple actions:
