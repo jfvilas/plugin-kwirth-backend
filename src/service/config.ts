@@ -22,14 +22,14 @@ import { KwirthData, versionGreatOrEqualThan } from '@jfvilas/kwirth-common'
 
 /**
  * loads Namespace Permissions setting from app-config xml
- * @param block name of the Kwirth block te read ('chart', 'log', 'audit'...)
+ * @param channelConfig name of the Kwirth channel to read ('metrics', 'log'...)
  * @param logger Logger service
  */
-const loadNamespacePermissions = (block:Config, logger:LoggerService):KwirthNamespacePermissions[] => {
+const loadNamespacePermissions = (channelConfig:Config, logger:LoggerService):KwirthNamespacePermissions[] => {
     var namespacePermissions:KwirthNamespacePermissions[] = []
-    if (block.has('namespacePermissions')) {
+    if (channelConfig.has('namespacePermissions')) {
         logger.info(`  Namespace permisson evaluation will be performed.`)
-        var permNamespaces= (block.getOptionalConfigArray('namespacePermissions'))!
+        var permNamespaces= (channelConfig.getOptionalConfigArray('namespacePermissions'))!
         for (var ns of permNamespaces) {
             var namespace=ns.keys()[0]
             var identityRefs=ns.getStringArray(namespace)
@@ -75,15 +75,16 @@ const loadPodRules = (config:Config, category:string):PodPermissionRule[] => {
 }
 
 /**
- * loads pod permissions (namespace and pod) for a specific Kwirth block
- * @param block then name of the key (inside app-config) to read config from
+ * loads pod permissions (namespace and pod) for a specific Kwirth channel
+ * @param channelConfig then name of the key (inside app-config) to read config from
  * @param logger Logger service
  * @returns an array of pod permissions
  */
-const loadPodPermissions = (block:Config, logger:LoggerService):KwirthPodPermissions[] => {
+const loadPodPermissions = (channelConfig:Config, logger:LoggerService):KwirthPodPermissions[] => {
     var clusterPodPermissions:KwirthPodPermissions[]=[]
-    if (block.has('podPermissions')) {
-        var namespaceList=block.getConfigArray('podPermissions')
+    if (channelConfig.has('podPermissions')) {
+        logger.info(`  Pod permisson evaluation will be performed.`)
+        var namespaceList=channelConfig.getConfigArray('podPermissions')
         for (var ns of namespaceList) {
             var namespaceName=ns.keys()[0]
             var podPermissions:KwirthPodPermissions={ namespace:namespaceName }
@@ -111,28 +112,32 @@ const loadPodPermissions = (block:Config, logger:LoggerService):KwirthPodPermiss
 }
 
 /**
- * Reads permissions for a kwirth block (like log, metrics...)
- * @param channel name of the block
+ * Reads permissions for a kwirth channel (like log, metrics...)
+ * @param channel name of the channel
  * @param logger bs logger service
  * @param cluster the app-config object containing the cluster to process
- * @param kdata current KwirthClusterData object to add block permissions
+ * @param kdata current KwirthClusterData object to add channel permissions
  */
 const addChannelPermissions = (channel: string, logger:LoggerService, cluster:Config, kdata:KwirthClusterData) => {
-    var keyName = 'kwirth'+channel
-    if (cluster.has(keyName)) {
-        logger.info(`Load permissions for block ${channel}.`)
-        var configBlock=cluster.getConfig(keyName);
-        if (configBlock.has('namespacePermissions')) {
+    let keyname = 'kwirth' + channel
+
+    let keyCamelName = 'kwirth' + channel[0].toUpperCase() + channel.substring(1)
+    if (cluster.has(keyCamelName)) keyname = keyCamelName
+
+    if (cluster.has(keyname)) {
+        logger.info(`Load permissions for channel ${channel} (config: ${keyname}).`)
+        var configChannel=cluster.getConfig(keyname);
+        if (configChannel.has('namespacePermissions')) {
             logger.info(`  Loading namespace permissions.`)
-            kdata.namespacePermissions.set(channel, loadNamespacePermissions(configBlock, logger))
+            kdata.namespacePermissions.set(channel, loadNamespacePermissions(configChannel, logger))
         }
         else {
             logger.info(`  No namespace permissions.`)
             kdata.namespacePermissions.set(channel, [])
         }
-        if (configBlock.has('podPermissions')) {
+        if (configChannel.has('podPermissions')) {
             logger.info(`  Loading pod permissions.`)
-            kdata.podPermissions.set(channel, loadPodPermissions(configBlock, logger))
+            kdata.podPermissions.set(channel, loadPodPermissions(configChannel, logger))
         }
         else {
             logger.info(`  No pod permissions.`)
@@ -235,9 +240,7 @@ const loadClusters = async (logger:LoggerService, config:RootConfigService) => {
             }
 
             if (enableCluster) {
-                addChannelPermissions('log',logger, cluster, kwirthClusterData)
-                addChannelPermissions('alert',logger, cluster, kwirthClusterData)
-                addChannelPermissions('metrics',logger, cluster, kwirthClusterData)
+                ['log', 'alert', 'metrics'].map (channel => addChannelPermissions(channel,logger, cluster, kwirthClusterData))
                 KwirthStaticData.clusterKwirthData.set(name, kwirthClusterData)
             }
             else {
