@@ -2,7 +2,7 @@
 This Backstage plugin is the backend for several Kwirth plugins that we have developed for integrating live streaming Kubernetes information into Backstage by using Kwirth. It's important to understand that **Kwirth provides different kinds of information** (log, metrics, events...), and due to this way of working, the whole set of Backstage Kwirth plugins are comprised by:
 
   - One only backend plugin (**this one**).
-  - Several frontend plugins, each one including its own features. Typically, there sould exist one Backstage Kwirth frontend plugin for each Kwirth supported channel (please refer to information on Kwirth channels here [Kwirth Channels](https://github.com/jfvilas/kwrith#channels)).
+  - Several frontend plugins, each one including its own features. Typically, there sould exist one Backstage Kwirth frontend plugin for each Kwirth supported channel (please refer to information on Kwirth channels here [Kwirth Channels](https://github.com/jfvilas/kwirth#channels)).
 
 **NOTE: Backstage Kwirth plugins requires a Kwirth server running on Kubernetes whose version is at least 0.3.155**
 
@@ -183,7 +183,7 @@ Once you have created the groups you can configure the namespace permission addi
           title: 'Kubernetes local'
           kwirthHome: http://your-external.dns.name/kwirth
           kwirthApiKey: '40f5ea6c-bac3-df2f-d184-c9f3ab106ba9|permanent|cluster::::'
-          kwrithlog:
+          kwirthlog:
 +           namespacePermissions:
 +             - stage: ['group:default/devops', 'group:default/admin']
 +             - production: ['group:default/admin', 'user:default/nicklaus-wirth']
@@ -217,7 +217,7 @@ Let's consider a simple view-scoped pod permission sample based on previously de
           authProvider: 'serviceAccount'
           skipTLSVerify: true
           skipMetricsLookup: true
-          kwrithlog:
+          kwirthlog:
             namespacePermissions:
               - stage: ['group:default/devops', 'group:default/admin']
               - production: ['group:default/admin', 'user:default/nicklaus-wirth']
