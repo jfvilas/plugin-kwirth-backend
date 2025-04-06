@@ -2,7 +2,7 @@
 This Backstage plugin is the backend for several Kwirth plugins that we have developed for integrating live streaming Kubernetes information into Backstage by using Kwirth. It's important to understand that **Kwirth provides different kinds of information** (log, metrics, events...), and due to this way of working, the whole set of Backstage Kwirth plugins are comprised by:
 
   - One only backend plugin (**this one**).
-  - Several frontend plugins, each one including its own features. Typically, there sould exist one Backstage Kwirth frontend plugin for each Kwirth supported channel (please refer to information on Kwirth channels here [Kwirth Channels](https://github.com/jfvilas/kwirth#channels)).
+  - Several frontend plugins, each one including its own features. Typically, there sould exist one Backstage Kwirth frontend plugin for each Kwirth supported channel (please refer to information on Kwirth channels here [Kwirth Channels](https://jfvilas.github.io/kwirth/#/channels)).
 
 **NOTE: Backstage Kwirth plugins requires a Kwirth server running on Kubernetes whose version is at least 0.3.155**
 
