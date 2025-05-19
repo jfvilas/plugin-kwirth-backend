@@ -17,7 +17,7 @@ import { LoggerService, RootConfigService } from '@backstage/backend-plugin-api'
 import { KwirthStaticData, MIN_KWIRTH_VERSION } from '../model/KwirthStaticData'
 import { KwirthClusterData, KwirthNamespacePermissions, KwirthPodPermissions, PodPermissionRule } from '../model/KwirthClusterData'
 import { Config } from '@backstage/config'
-import { KwirthData, versionGreatOrEqualThan } from '@jfvilas/kwirth-common'
+import { ClusterTypeEnum, InstanceMessageChannelEnum, KwirthData, versionGreatOrEqualThan } from '@jfvilas/kwirth-common'
 
 
 /**
@@ -180,7 +180,8 @@ const loadClusters = async (logger:LoggerService, config:RootConfigService) => {
                     inCluster: false,
                     namespace: '',
                     deployment: '',
-                    lastVersion: ''
+                    lastVersion: '',
+                    clusterType: ClusterTypeEnum.KUBERNETES
                 },
                 title,
                 namespacePermissions: new Map(),
@@ -226,7 +227,8 @@ const loadClusters = async (logger:LoggerService, config:RootConfigService) => {
                             inCluster:false,
                             namespace:'unknown',
                             deployment:'unknown',
-                            lastVersion:'0.0.0'
+                            lastVersion:'0.0.0',
+                            clusterType: ClusterTypeEnum.KUBERNETES
                         }
                     }
                 }
@@ -240,7 +242,10 @@ const loadClusters = async (logger:LoggerService, config:RootConfigService) => {
             }
 
             if (enableCluster) {
-                ['log', 'alert', 'metrics'].map (channel => addChannelPermissions(channel,logger, cluster, kwirthClusterData))
+                [ InstanceMessageChannelEnum.LOG, 
+                  InstanceMessageChannelEnum.ALERT,
+                  InstanceMessageChannelEnum.METRICS
+                ].map (channel => addChannelPermissions(channel,logger, cluster, kwirthClusterData))
                 KwirthStaticData.clusterKwirthData.set(name, kwirthClusterData)
             }
             else {
