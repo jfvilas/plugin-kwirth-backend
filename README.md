@@ -1,29 +1,31 @@
 # Backstage backend Kwirth plugin 
-This Backstage plugin is the backend for several Kwirth plugins that we have developed for integrating live streaming Kubernetes information into Backstage by using Kwirth. It's important to understand that **Kwirth provides different kinds of information** (log, metrics, events...), and due to this way of working, the whole set of Backstage Kwirth plugins are comprised by:
+This Backstage plugin is the backend for several Backstage plugins that we have developed for integrating live streaming Kubernetes information (whatever be its type) into Backstage by using Kwirth plugins. It's important to understand that **Kwirth provides different kinds of information** (log, metrics, events, operations...), and due to this way of working, the whole set of Backstage Kwirth plugins are comprised by:
 
   - One only backend plugin (**this one**).
-  - Several frontend plugins, each one including its own features. Typically, there sould exist one Backstage Kwirth frontend plugin for each Kwirth supported channel (please refer to information on Kwirth channels here [Kwirth Channels](https://jfvilas.github.io/kwirth/#/channels)).
-
-**NOTE: Backstage Kwirth plugins requires a Kwirth server running on Kubernetes whose version is at least 0.3.155**
-
+  - Several frontend plugins, each one including its own feature set. Typically, there should exist one Backstage Kwirth frontend plugin for each Kwirth supported channel (please refer to information on Kwirth channels here [Kwirth Channels](https://jfvilas.github.io/kwirth/#/channels)).
 
 This [Backstage]((https://backstage.io)) backend plugin is primarily responsible for the following tasks:
 
 - Reading Kwirth config from your app-config YAML file.
-- Validating login processes to remote Kwirth instances, and thus obtaining valid API keys for users to stream kubernetes data.
+- Performing login processes to remote Kwirth instances, and thus obtaining valid API keys for users to stream kubernetes data.
 - Receiving and answering API calls from configured frontend Kwirth plugins on your Backstage instance.
 
-## Install
+## Version compatibility
+Following table shows version compatibility between Kwirth Backstage plugin and Kwirth Core server.
 
-### Up and Running
-Here's how to get this backend plugin up and running quickly. First we need to add the `@jfvilas/plugin-kwirth-backend` package to your Backstage project:
+| Plugin Kwirth version | Kwirth version |
+|-|-|
+|0.0.1|0.3.155|
+
+## Install plugin
+Here we show how to get this backend plugin up and running quickly. First we need to add the `@jfvilas/plugin-kwirth-backend` package to your Backstage project:
 
 ```sh
 # From your Backstage root directory
 yarn --cwd packages/backend add @jfvilas/plugin-kwirth-backend @jfvilas/plugin-kwirth-common
 ```
 
-### New Backend System (we don't work with old backend system)
+### Taylor your New Backend System (we don't work with old backend system)
 Next, you need to modify your backend index file for starting Kwirth backend plugin when your Backstage instance starts. In your `packages/backend/src/index.ts` make the following change:
 
 ```diff
@@ -39,29 +41,43 @@ Next, you need to modify your backend index file for starting Kwirth backend plu
 ```
 
 ## Configure
-To have your Kwirth plugins ready for work you must perform some previous additional tasks, like deploying Kwirth, creating API Keys, defining clusters, etc... In this section we cover all these needs in a structured way.
+To have your Kwirth frontend plugins ready for work you must perform some previous additional tasks, like deploying Kwirth, creating API Keys, defining clusters, etc... In this section we cover all these needs in a structured way.
 
-Remember, Backstage Kwirth plugins helps you in showing live-streaming kubernetes data inside Backstage to ease your develoment teams work, but take into account that **this plugin has no access to the kubernetes itself**, it relies on a Kwirth deployment to act as a "live-streaming data proxy", that is, Kwirth (a component that runs inside your Kubernetes clusters) has access to kubernetes data and can "export" them outside the cluster in a reliable and secure way, so kubernetes data can be consumed anywhere. For example, logs can be shown on Backstage entity pages, kubernetes metrics can be charted on your Backstage, etc.
+Remember, Backstage Kwirth plugins helps you in showing live-streaming kubernetes data inside Backstage to ease your develoment teams work, but take into account that **this plugin has no access to the kubernetes itself**, it relies on a Kwirth deployment to act as a "live-streaming data proxy", that is, Kwirth (a component that runs inside your Kubernetes clusters) has access to kubernetes data and can "export" that data outside the cluster in a reliable and secure way, so kubernetes data can be consumed anywhere. For example, logs can be shown on Backstage entity pages, kubernetes metrics can be charted on your Backstage, etc.
 
 ### 1. Kwirth installation
-We will not cover this subject here, we refer you to [Kwirth installation documentation](https://jfvilas.github.io/kwirth/#/installation) where you will find more information on how Kwirth works and how to install it. We show here just a summary of what is Kwirth:
+We will not cover a detailed approach to this subject here, we refer you to [Kwirth installation documentation](https://jfvilas.github.io/kwirth/#/installation) where you will find more information on how Kwirth works and how to install it. We show here just a summary of what is Kwirth:
 
 1. Kwirth is built around the **one-only-pod concept**.
-2. Kwirth doesn't need any persistenace layer (no database, no network storage, no block storage, no file storage). It uses only Kubernetes storage.
-3. Kwirth provides user management, API security and multi-cluster access.
+2. Kwirth doesn't need any persistenace layer (no database, no network storage, no block storage, no file storage). It uses only Kubernetes control-plane storage.
+3. Kwirth includes user management, API security and multi-cluster access.
 4. Kwirth can export **kubernets data in real-time** wherever you need it.
 
 ### 2. Kwirth server customization
-Once you have a Kubernetes cluster with a Kwirth installation in place (in order to export kuberntes data, Kwirth must be accesible from outside your cluster, so you will need to install any flavour of Ingress Controller and an Ingress for publishing Kwirth access). Please **write down your Kwirth external access** (we will need it for configuring Kwirth plugin). For simplifying reading of this tutorial we will assume your Kwirth is published on: **http://your-external.dns.name/kwirth**.
+Once you have a Kubernetes cluster with a Kwirth installation in place (in order to export kuberntes data, Kwirth must be accesible from outside your cluster, so you will need to install any flavour of Ingress Controller and an Ingress for publishing Kwirth access). Please **write down your Kwirth external access URL** (we will need it for configuring Kwirth plugin). In order to simplify this tutorial we will assume your Kwirth is published on: **http://your-external.dns.name/kwirth**.
 
 Once Kwirth is running, you need to enter Kwirth front application to perform two simple actions:
+
 1. Login to your Kwirth and access the [API Key section](https://jfvilas.github.io/kwirth/#/apimanagement?id=api-management) to create an API Key that we will use for giving our Backstage Kwirth plugin the chance to connect to your Kwirth server and access kubernetes data.
-2. The API Key should be 'permanent', the scope has to be 'cluster' and set the expire term long enough. When the API Key has been created, copy the API Key that Kwirth will create for you and is displayed at the API Key list.
+2. Create an API Key following this procedures:
+     - On the main menu (the burger icon) select 'API Security'.
+     - Click 'NEW' button on the bottom-left side of the dialog.
+     - Enter some description on the right, like 'API key for my Backstage instance'.
+     - Enter lease time (is the number of days the API Key will be valid).
+     - Don't worry about key type, it is fixed with 'permanent' value.
+     - On the 'Scopes' combo check only 'cluster' option.
+     - Click 'Save' on the bottom-right side for saving this resource access into your API key.
+     - Now click on th 'SAVE' button on the bottom-left side for saving this API Key.
+3. API Key should appear on the API Key list, inlcuding its expiration date.
+4. Select your API Key (clicking on it) and click on bottom-left 'COPY' button for copying the API Key that you will add to your app-config YAML file.
 
-This is all you need to do inside Kwirth. You can also do some play on Kwirth front application, it's very funny.
+You can view this video if you have doubts on how to perform these tasks.
++++ video
 
-### 3. Backstage configuration
-For finishing this backend Kwirth plugin configuration you need to **edit your app-config.yaml** in order to add Kwirth information to your Kubernetes cluster. Kwirth plugin doesn't have a specific section in the app-config, it just **uses the Backstage Kubernetes core component configuration** vitamined with some additional properties. Let's suppose you have a Kubernetes configuration like this in your current app-config.yaml:
+This is all you need to do inside Kwirth. You can also do some play on Kwirth front application, it's very funny, I fully recommend it !!!
+
+### 3. Backstage base configuration
+For finishing this backend Kwirth plugin configuration you need to **edit your app-config.yaml** in order to add Kwirth information to your Kubernetes cluster. Kwirth plugin doesn't have a specific section in the app-config, Kwirth just **uses the Backstage Kubernetes core component configuration** vitamined with some additional properties. Let's suppose you have a Kubernetes configuration like this in your current app-config.yaml:
 
 ```yaml
 kubernetes:
@@ -78,11 +94,12 @@ kubernetes:
           skipMetricsLookup: true
 ```
 
-We will add (at least) 2 properties to the cluster configuration:
+For using Kwirth Backstage plugin we need to add (at least) 2 properties to the cluster configuration:
 - kwirthHome: the home URL of the Kwirth installation.
-- kwirthApiKey: the API key we created before.
+- kwirthApiKey: the API key we created before (and should be kept in your clipboard).
 
 The kubernetes section should look now something like this:
+
 ```diff
 kubernetes:
   serviceLocatorMethod:
@@ -101,11 +118,11 @@ kubernetes:
 ```
 
 ### 4. Channels
-Kwirth live-streaming data system can export different kinds of data: log streaming, metrics streaming, alerts... In Kwirth, these different types of data are grouped in **channels**. In fact, each channel may be viewed as a data service (please refer here to learn how the channel system works [Kwirth channels](https://jfvilas.github.io/kwirth/#/channels)).
+Kwirth live-streaming data system can export different kinds of data: log streaming, metrics streaming, alerts, events... In Kwirth, these different types of data are grouped in what we call **channels**. In fact, each channel may be viewed as an independent data service (please refer here to learn how the channel system works [Kwirth channels](https://jfvilas.github.io/kwirth/#/channels)).
 
 Each Kwirth channel is functionally mapped to a Kwirth frontend plugin, and thus, there exist a specific configuration for each channel. So:
 
- - For the Kwirth metrics channel, you should use the 'plugin-kwirth-metrics' frontend plugin.
+ - For the Kwirth metrics streaming channel, you should use the 'plugin-kwirth-metrics' frontend plugin.
  - For the Kwirth real-time log channel, you should use the 'plugin-kwirth-log' frontend plugin.
  - ...
 

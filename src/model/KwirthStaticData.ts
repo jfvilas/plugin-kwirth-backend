@@ -16,7 +16,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 const VERSION='0.0.1'
-const MIN_KWIRTH_VERSION='0.3.128'
+const MIN_KWIRTH_VERSION='0.4.11'
 
 class KwirthStaticData {
     public static clusterKwirthData : Map<string,KwirthClusterData> = new Map()

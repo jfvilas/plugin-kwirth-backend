@@ -166,7 +166,6 @@ async function createRouter(options: KwirthRouterOptions) : Promise<express.Rout
     }
 
     const addAccessKeys = async (channel:string, reqScope:InstanceConfigScopeEnum, foundClusters:ClusterValidPods[], entityName:string, userEntityRef:string, userGroups:string[]) => {
-        //let reqScope:InstanceConfigScopeEnum = reqScopeStr as InstanceConfigScopeEnum
         if (!reqScope) {
             loggerSvc.info(`Invalid scope requested: ${reqScope}`)
             return
