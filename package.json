@@ -1,6 +1,6 @@
 {
   "name": "@jfvilas/plugin-kwirth-backend",
-  "version": "0.12.4",
+  "version": "0.12.5",
   "description": "Backstage backend plugin for Kwirth plugins",
   "keywords": [
     "Backstage",
