@@ -1,8 +1,9 @@
 # Backstage backend Kwirth plugin 
-This Backstage plugin is the backend for several Backstage plugins that we have developed for integrating live streaming Kubernetes information (whatever be its type) into Backstage by using Kwirth plugins. It's important to understand that **Kwirth provides different kinds of information** (log, metrics, events, operations...), and due to this way of working, the whole set of Backstage Kwirth plugins are comprised by:
+This Backstage plugin is the backend for several Backstage plugins that we have developed for integrating live streaming Kubernetes observability data (whatever be its type) into Backstage by using Kwirth plugins. It's important to understand that **Kwirth provides different kinds of information** (log, metrics, events, alerts, operations...), and due to this way of working, the whole set of Backstage Kwirth plugins are comprised by:
 
   - One only backend plugin (**this one**).
   - Several frontend plugins, each one including its own feature set. Typically, there should exist one Backstage Kwirth frontend plugin for each Kwirth supported channel (please refer to information on Kwirth channels here [Kwirth Channels](https://jfvilas.github.io/kwirth/#/channels)).
+   One common plugin, containing common artifactos to use by frontend plugins and backend plugin.
 
 This [Backstage]((https://backstage.io)) backend plugin is primarily responsible for the following tasks:
 
@@ -16,6 +17,7 @@ Following table shows version compatibility between Kwirth Backstage plugin and 
 | Plugin Kwirth version | Kwirth version |
 |-|-|
 |0.0.1|0.3.155|
+|0.0.2|0.4.20|
 
 ## Install plugin
 Here we show how to get this backend plugin up and running quickly. First we need to add the `@jfvilas/plugin-kwirth-backend` package to your Backstage project:
@@ -41,24 +43,25 @@ Next, you need to modify your backend index file for starting Kwirth backend plu
 ```
 
 ## Configure
-To have your Kwirth frontend plugins ready for work you must perform some previous additional tasks, like deploying Kwirth, creating API Keys, defining clusters, etc... In this section we cover all these needs in a structured way.
+To have your Kwirth backend plugins ready for work you must perform some previous additional tasks, like deploying Kwirth, creating API Keys, defining clusters, etc... In this section we cover all these needs in a structured way.
 
-Remember, Backstage Kwirth plugins helps you in showing live-streaming kubernetes data inside Backstage to ease your develoment teams work, but take into account that **this plugin has no access to the kubernetes itself**, it relies on a Kwirth deployment to act as a "live-streaming data proxy", that is, Kwirth (a component that runs inside your Kubernetes clusters) has access to kubernetes data and can "export" that data outside the cluster in a reliable and secure way, so kubernetes data can be consumed anywhere. For example, logs can be shown on Backstage entity pages, kubernetes metrics can be charted on your Backstage, etc.
+Remember, frontend Backstage Kwirth plugins help you in showing live-streaming kubernetes observability data inside Backstage to ease your develoment teams work, but take into account that **this Backstage backend plugin has no access to the kubernetes itself**, it relies on a Kwirth deployment to act as a "*live-streaming data proxy*", that is, Kwirth (a component that runs inside your Kubernetes clusters) has access to kubernetes data and can "export" that data outside the cluster in a reliable and secure way, so kubernetes data can be consumed anywhere. For example, logs can be shown on Backstage entity pages, kubernetes metrics can be charted on your Backstage, you can receive alerts or security information related to your pods (based on [Trivy Operator](https://github.com/aquasecurity/trivy-operator)) etc.
 
 ### 1. Kwirth installation
-We will not cover a detailed approach to this subject here, we refer you to [Kwirth installation documentation](https://jfvilas.github.io/kwirth/#/installation) where you will find more information on how Kwirth works and how to install it. We show here just a summary of what is Kwirth:
+We will not cover a detailed approach on this subject here, we refer you to [Kwirth installation documentation](https://jfvilas.github.io/kwirth/#/0.4.20/installation) where you will find more information on how Kwirth works and how to install it. We show here just a summary of what is Kwirth:
 
 1. Kwirth is built around the **one-only-pod concept**.
 2. Kwirth doesn't need any persistenace layer (no database, no network storage, no block storage, no file storage). It uses only Kubernetes control-plane storage.
 3. Kwirth includes user management, API security and multi-cluster access.
-4. Kwirth can export **kubernets data in real-time** wherever you need it.
+4. Kwirth can export **kubernetes observability data in real-time** wherever you need it.
+5. The kind of observability data you need is served by differnet [Kwirth channels](https://jfvilas.github.io/kwirth/#/0.4.20/channels?id=channels).
 
 ### 2. Kwirth server customization
-Once you have a Kubernetes cluster with a Kwirth installation in place (in order to export kuberntes data, Kwirth must be accesible from outside your cluster, so you will need to install any flavour of Ingress Controller and an Ingress for publishing Kwirth access). Please **write down your Kwirth external access URL** (we will need it for configuring Kwirth plugin). In order to simplify this tutorial we will assume your Kwirth is published on: **http://your-external.dns.name/kwirth**.
+Once you have a Kubernetes cluster with a Kwirth installation in place (in order to export kuberntes data, Kwirth must be accesible from outside your cluster, so you will need to install any flavour of Ingress Controller and an Ingress for publishing Kwirth access). Please **write down your Kwirth external access URL** (we will need it for configuring Kwirth backend plugin). In order to simplify this tutorial we will assume your Kwirth is published on: **http://your-external.dns.name/kwirth**.
 
 Once Kwirth is running, you need to enter Kwirth front application to perform two simple actions:
 
-1. Login to your Kwirth and access the [API Key section](https://jfvilas.github.io/kwirth/#/apimanagement?id=api-management) to create an API Key that we will use for giving our Backstage Kwirth plugin the chance to connect to your Kwirth server and access kubernetes data.
+1. Login to your Kwirth and access the [API Key section](https://jfvilas.github.io/kwirth/#/apimanagement?id=api-management) to create an API Key that we will use for giving our Backstage Kwirth plugin the chance to connect to your Kwirth server and access kubernetes observability data.
 2. Create an API Key following this procedures:
      - On the main menu (the burger icon) select 'API Security'.
      - Click 'NEW' button on the bottom-left side of the dialog.
@@ -71,8 +74,7 @@ Once Kwirth is running, you need to enter Kwirth front application to perform tw
 3. API Key should appear on the API Key list, inlcuding its expiration date.
 4. Select your API Key (clicking on it) and click on bottom-left 'COPY' button for copying the API Key that you will add to your app-config YAML file.
 
-You can view this video if you have doubts on how to perform these tasks.
-+++ video
+**NOTE:** Depending on the version of Kwirth you have deployed, maybe you find a dialog for performing all these actions automatically the first time you log in with the admin user.
 
 This is all you need to do inside Kwirth. You can also do some play on Kwirth front application, it's very funny, I fully recommend it !!!
 
@@ -118,12 +120,14 @@ kubernetes:
 ```
 
 ### 4. Channels
-Kwirth live-streaming data system can export different kinds of data: log streaming, metrics streaming, alerts, events... In Kwirth, these different types of data are grouped in what we call **channels**. In fact, each channel may be viewed as an independent data service (please refer here to learn how the channel system works [Kwirth channels](https://jfvilas.github.io/kwirth/#/channels)).
+Kwirth live-streaming system can export different kinds of data: log streaming, metrics streaming, alerts, events, security posture... In Kwirth, these different types of data are grouped in what we call **channels**. In fact, each channel may be viewed as an independent data service (please refer here to learn how the channel system works [Kwirth channels](https://jfvilas.github.io/kwirth/#/0.4.20/channelarch?id=channels)).
 
 Each Kwirth channel is functionally mapped to a Kwirth frontend plugin, and thus, there exist a specific configuration for each channel. So:
 
  - For the Kwirth metrics streaming channel, you should use the 'plugin-kwirth-metrics' frontend plugin.
  - For the Kwirth real-time log channel, you should use the 'plugin-kwirth-log' frontend plugin.
+ - For the Kwirth cybersecurity channel (named trivy channel), you should use the 'plugin-kwirth-trivy' frontend plugin.
+ - For the Kwirth alert channel, you should use the 'plugin-kwirth-alert' frontend plugin.
  - ...
 
 In your app-config.yaml configuration file you must configure each one of the channels. Let's show an example of 'log' and 'alert' channels:
@@ -157,7 +161,7 @@ kubernetes:
 
 As you may see, channel configuration takes place inside your Backstage cluster configuration, because, as we said before, Kwirth plugin **uses the Backstage Kubernetes core component configuration**.
 
-So, for adding 'log' and 'alert' channel we have created two sections: 'kwirthlog' and 'kwirthalert'. The content of channel sections is explained bellow, it is just the permission system.
+So, for adding 'log' and 'alert' channel we have created two sections: 'kwirthlog' and 'kwirthalert'. The content of channel sections inside the app-config file is explained bellow, it is just the permission system.
 
 ### 4. Permissions
 
@@ -170,7 +174,7 @@ The permission system of Kwirth plugin for Backstage has been designed with thes
 So, the permission system has been build using (right now) two layers:
 
   1. **Namespace layer**. Assigning permissions to whole namespaces can be done in a extremely simple way using this layer.
-  2. **Pod layer**. If namespace permission layer is not coarse enough for you, you can refine your permissions by using the pod permission layer which. In addition, the pod layer allows adding scopes to the different permissions you can assign.
+  2. **Pod layer**. If namespace permission layer is not coarse enough for you, you can refine your permissions by using the pod permission layer. In addition, the pod layer allows adding scopes to the different permissions you can assign.
 
 
 #### Namespace layer
@@ -184,7 +188,7 @@ Let's build a sample situation. Typically, you would restrict access to kubernet
   - Only Operations (devops) teams and Administrators can view stage logs.
   - Only Administrators can see production logs. In addition to administrators, production can also be accessed by Nicklaus Wirth.
 
-The way you can manage this in Kwirth  plugin is **via Group entities** of Backstage. That is:
+The way you can manage this in Kwirth plugin is **via Group entities** of Backstage. That is:
   - You create a group where you can add all your developers.
   - Another group with your devops team.
   - And a group containing just the Administrators.
@@ -210,7 +214,7 @@ Once you have created the groups you can configure the namespace permission addi
 ```
 
 It's easy to understand:
-  1. Everybody can access 'dev' namespace, since we have stated *no restrictions* at all (we added no 'dev' namespace in the namePermissions)
+  1. Everybody can access 'dev' namespace, since we have stated *no restrictions* at all (we added no 'dev' namespace in the namespacePermissions)
   2. 'stage' namespace can be accessed by group 'devops' and group 'admin'.
   3. The 'production' namespace can be accessed by the group of administrators ('admin' group) and the user Nicklaus Wirth ('nicklaus-wirth').
   
