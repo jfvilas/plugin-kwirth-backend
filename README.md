@@ -24,7 +24,7 @@ Here we show how to get this backend plugin up and running quickly. First we nee
 
 ```sh
 # From your Backstage root directory
-yarn --cwd packages/backend add @jfvilas/plugin-kwirth-backend @jfvilas/plugin-kwirth-common
+yarn --cwd packages/backend add @jfvilas/plugin-kwirth-backend @jfvilas/plugin-kwirth-common @jfvilas/kwirth-common
 ```
 
 ### Taylor your New Backend System (we don't work with old backend system)
