@@ -21,11 +21,11 @@ import { UserEntity } from '@backstage/catalog-model'
 import { FetchApi } from '@backstage/core-plugin-api'
 
 // Kwirth
-import { ClusterValidPods, MetricDefinition, PodData } from '@jfvilas/plugin-kwirth-common'
+import { ANNOTATION_BACKSTAGE_KUBERNETES_LABELSELECTOR, ClusterValidPods, MetricDefinition, PodData } from '@jfvilas/plugin-kwirth-common'
 import { loadClusters } from './config'
 import { KwirthStaticData, VERSION } from '../model/KwirthStaticData'
 import { checkNamespaceAccess, checkPodAccess, getPodPermissionSet } from './permissions'
-import { accessKeySerialize, InstanceConfigScopeEnum } from '@jfvilas/kwirth-common'
+import { accessKeySerialize, InstanceConfigScopeEnum, versionGreatThan } from '@jfvilas/kwirth-common'
 
 export type KwirthRouterOptions = {
     discoverySvc: DiscoveryService
@@ -103,14 +103,81 @@ async function createRouter(options: KwirthRouterOptions) : Promise<express.Rout
      * @param entityName name of the tagge dentity
      * @returns a ClusterValidPods[] (each ClusterValidPods is a cluster info with a list of pods tagged with the entityName).
      */
-    const getValidClusters = async (entityName:string) : Promise<ClusterValidPods[]> => {
+    // const getValidClusters = async (entityName:string) : Promise<ClusterValidPods[]> => {
+    //     let clusterList:ClusterValidPods[]=[]
+
+    //     for (const clusterName of KwirthStaticData.clusterKwirthData.keys()) {
+    //         let url = KwirthStaticData.clusterKwirthData.get(clusterName)?.kwirthHome as string
+    //         let apiKeyStr = KwirthStaticData.clusterKwirthData.get(clusterName)?.kwirthApiKey
+    //         let title = KwirthStaticData.clusterKwirthData.get(clusterName)?.title
+    //         // ways to select components:
+    //         // label id:
+    //         //   'backstage.io/kubernetes-id': 'xxxxx'
+    //         // label selector:
+    //         //   'backstage.io/kubernetes-label-selector': 'app=my-app,component=front-end'
+    //         let queryUrl=url+`/managecluster/find?label=backstage.io%2fkubernetes-id&entity=${entityName}&type=pod&data=containers`
+    //         try {
+    //             let fetchResp = await fetch (queryUrl, {headers:{'Authorization':'Bearer '+apiKeyStr}})
+    //             if (fetchResp.status===200) {
+    //                 let jsonResp=await fetchResp.json()
+    //                 if (jsonResp) {
+    //                     let podData:ClusterValidPods = {
+    //                         name: clusterName, url, title, data: jsonResp, accessKeys: new Map()
+    //                     }
+    //                     clusterList.push(podData)
+    //                 }
+    //             }
+    //             else {
+    //                 loggerSvc.warn(`Invalid response from cluster ${clusterName}: ${fetchResp.status}`)
+    //                 console.log(await fetchResp.text())
+    //                 clusterList.push({ name: clusterName, url, title, data:[], accessKeys:new Map() })
+    //             }
+
+    //         }
+    //         catch (err) {
+    //             loggerSvc.warn(`Cannot access cluster ${clusterName} (URL: ${queryUrl}): ${err}`)
+    //             clusterList.push({ name: clusterName, url, title, data:[], accessKeys:new Map() })
+    //         }
+    //     }
+
+    //     return clusterList
+    // }
+
+    const getValidClustersFromEntity = async (entity:any) : Promise<ClusterValidPods[]> => {
         let clusterList:ClusterValidPods[]=[]
 
         for (const clusterName of KwirthStaticData.clusterKwirthData.keys()) {
             let url = KwirthStaticData.clusterKwirthData.get(clusterName)?.kwirthHome as string
             let apiKeyStr = KwirthStaticData.clusterKwirthData.get(clusterName)?.kwirthApiKey
             let title = KwirthStaticData.clusterKwirthData.get(clusterName)?.title
-            let queryUrl=url+`/managecluster/find?label=backstage.io%2fkubernetes-id&entity=${entityName}&type=pod&data=containers`
+            let clusterVersion = KwirthStaticData.clusterKwirthData.get(clusterName)?.kwirthData.version || '0.0.0'
+
+            // ways to select components:
+            // label id:
+            //   'backstage.io/kubernetes-id': 'xxxxx'
+            // label selector:
+            //   'backstage.io/kubernetes-label-selector': 'app=my-app,component=front-end'
+            let queryUrl = undefined
+            if (entity.metadata.annotations['backstage.io/kubernetes-id']) {
+                queryUrl=url+`/managecluster/find?label=backstage.io%2fkubernetes-id&entity=${entity.metadata.annotations['backstage.io/kubernetes-id']}&type=pod&data=containers`
+            }
+            else if (entity.metadata.annotations['backstage.io/kubernetes-label-selector']) {
+                if (versionGreatThan(clusterVersion,'0.4.40')) {
+                    let escapedLabelSelector = encodeURIComponent(entity.metadata.annotations['backstage.io/kubernetes-label-selector'])
+                    queryUrl=url+`/managecluster/find?labelselector=${escapedLabelSelector}&type=pod&data=containers`
+                }
+                else {
+                    loggerSvc.error(`Version ${clusterVersion} from cluster ${clusterName} is not valid for using ${ANNOTATION_BACKSTAGE_KUBERNETES_LABELSELECTOR}`)
+                    clusterList.push({ name: clusterName, url, title, data:[], accessKeys:new Map() })
+                    continue
+                }
+            }
+            else {
+                loggerSvc.error('Received request without labelid/labelselector')
+                clusterList.push({ name: clusterName, url, title, data:[], accessKeys:new Map() })
+                continue
+            }
+
             try {
                 let fetchResp = await fetch (queryUrl, {headers:{'Authorization':'Bearer '+apiKeyStr}})
                 if (fetchResp.status===200) {
@@ -121,10 +188,15 @@ async function createRouter(options: KwirthRouterOptions) : Promise<express.Rout
                         }
                         clusterList.push(podData)
                     }
+                    else {
+                        loggerSvc.warn(`Invalid data received from cluster ${clusterName}`)
+                        clusterList.push({ name: clusterName, url, title, data:[], accessKeys:new Map() })
+                    }
                 }
                 else {
                     loggerSvc.warn(`Invalid response from cluster ${clusterName}: ${fetchResp.status}`)
-                    console.log(await fetchResp.text())
+                    let text = await fetchResp.text()
+                    if (text) loggerSvc.warn(text)
                     clusterList.push({ name: clusterName, url, title, data:[], accessKeys:new Map() })
                 }
 
@@ -176,6 +248,11 @@ async function createRouter(options: KwirthRouterOptions) : Promise<express.Rout
         for (let foundCluster of foundClusters) {
             let podList:PodData[]=[]
 
+            if ( !KwirthStaticData.clusterKwirthData.get(foundCluster.name)?.kwirthData.channels.some(c => c.id === channel) ) {
+                loggerSvc.warn(`Cluster ${foundCluster.name} does not implement channel ${channel} (requested scope: ${reqScope})`)
+                continue
+            }
+
             // for each pod we've found on the cluster we check all namespace permissions
             for (let podData of foundCluster.data) {
                 // first we check if user is allowed to acccess namespace
@@ -207,7 +284,7 @@ async function createRouter(options: KwirthRouterOptions) : Promise<express.Rout
                 if (accessKey) foundCluster.accessKeys.set(reqScope, accessKey)
             }
             else {
-                console.log(`No pods on podList for '${reqScope}' on channel '${channel}'`)
+                loggerSvc.info(`No pods on podList for '${reqScope}' on channel '${channel}' in cluster '${foundCluster.name}' for searching for entity: '${entityName}'`)
             }
         }
     }
@@ -256,9 +333,10 @@ async function createRouter(options: KwirthRouterOptions) : Promise<express.Rout
 
         loggerSvc.info(`Checking reqScopes '${req.query['scopes']}' scopes for working with pod: '${req.body.metadata.namespace+'/'+req.body.metadata.name}' for user '${userInfo.userEntityRef}'`)
 
-        // get a list of clusters that contain pods related to entity
         //+++ control errors here (maybe we cannot contact the cluster, for example)
-        let foundClusters:ClusterValidPods[] = await getValidClusters(req.body.metadata.name)
+        // get a list of clusters that contain pods related to entity
+        //let foundClusters:ClusterValidPods[] = await getValidClustersFromEntity(req.body.metadata.name)
+        let foundClusters:ClusterValidPods[] = await getValidClustersFromEntity(req.body)
 
         // add access keys to authorized resources (according to group membership and Kwirth config in app-config (namespace and pod permissions))
         for (let reqScopeStr of reqScopes) {
@@ -266,23 +344,22 @@ async function createRouter(options: KwirthRouterOptions) : Promise<express.Rout
             await addAccessKeys(reqChannel, reqScope, foundClusters, req.body.metadata.name, userInfo.userEntityRef, userGroupsRefs)
             if (reqScope === InstanceConfigScopeEnum.STREAM) {
                 for (let cluster of foundClusters) {
-                    let ak = cluster.accessKeys.get(InstanceConfigScopeEnum.STREAM)
-                    if (ak) {
-                        let url=cluster.url+'/metrics'
-                        let auth = 'Bearer '+accessKeySerialize(ak)
-                        console.log('urlauth', url, auth)
+                    let accessKey = cluster.accessKeys.get(InstanceConfigScopeEnum.STREAM)
+                    if (accessKey) {
+                        let url = cluster.url+'/metrics'
+                        let auth = 'Bearer '+accessKeySerialize(accessKey)
                         let fetchResp = await fetch (url, {headers:{'Authorization':auth}})
                         try {
                             let data = (await fetchResp.json()) as MetricDefinition[]
                             cluster.metrics = data
                         }
                         catch (err) {
-                            console.log('err')
+                            loggerSvc.error(`Cannot get metrics on cluster ${cluster.name}: `+err)
                         }
                     }
-                    else {
-                        console.log('noak')
-                    }
+                    // else {
+                    //     loggerSvc.warn(`Couldn't get accessKey for getting metrics list for cluster ${cluster.name}`)
+                    // }
                 }
             }
         }
