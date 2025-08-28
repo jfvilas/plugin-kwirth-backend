@@ -16,8 +16,8 @@ Following table shows version compatibility between Kwirth Backstage plugin and 
 
 | Plugin Kwirth version | Kwirth version |
 |-|-|
-|0.0.1|0.3.155|
-|0.0.2|0.4.20|
+|0.12.8|0.4.45|
+|0.12.6|0.4.20|
 
 ## Install plugin
 Here we show how to get this backend plugin up and running quickly. First we need to add the `@jfvilas/plugin-kwirth-backend` package to your Backstage project:
