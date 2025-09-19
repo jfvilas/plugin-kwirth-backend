@@ -1,4 +1,6 @@
+import { IBackendInfo } from '@jfvilas/plugin-kwirth-common'
 import { KwirthClusterData } from './KwirthClusterData'
+import { VERSION } from '..'
 
 /*
 Copyright 2024 Julio Fernandez
@@ -15,11 +17,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-const VERSION='0.0.1'
-const MIN_KWIRTH_VERSION='0.4.11'
+const MIN_KWIRTH_VERSION='0.4.63'
 
 class KwirthStaticData {
     public static clusterKwirthData : Map<string,KwirthClusterData> = new Map()
+    public static latestVersions : IBackendInfo
 }
 
 export { KwirthStaticData, VERSION, MIN_KWIRTH_VERSION }

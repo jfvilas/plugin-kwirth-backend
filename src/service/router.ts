@@ -22,10 +22,10 @@ import { FetchApi } from '@backstage/core-plugin-api'
 
 // Kwirth
 import { ANNOTATION_BACKSTAGE_KUBERNETES_LABELSELECTOR, ClusterValidPods, MetricDefinition, PodData } from '@jfvilas/plugin-kwirth-common'
-import { loadClusters } from './config'
+import { loadClusters, loadKwirthInfo } from './config'
 import { KwirthStaticData, VERSION } from '../model/KwirthStaticData'
 import { checkNamespaceAccess, checkPodAccess, getPodPermissionSet } from './permissions'
-import { accessKeySerialize, InstanceConfigScopeEnum, versionGreatThan } from '@jfvilas/kwirth-common'
+import { accessKeySerialize, InstanceConfigScopeEnum, versionGreaterThan } from '@jfvilas/kwirth-common'
 
 export type KwirthRouterOptions = {
     discoverySvc: DiscoveryService
@@ -57,6 +57,7 @@ async function createRouter(options: KwirthRouterOptions) : Promise<express.Rout
 
     try {
         loadClusters(loggerSvc, configSvc)
+        loadKwirthInfo(loggerSvc)
     }
     catch (err) {
         let txt=`Errors detected reading static configuration: ${err}`
@@ -162,7 +163,7 @@ async function createRouter(options: KwirthRouterOptions) : Promise<express.Rout
                 queryUrl=url+`/managecluster/find?label=backstage.io%2fkubernetes-id&entity=${entity.metadata.annotations['backstage.io/kubernetes-id']}&type=pod&data=containers`
             }
             else if (entity.metadata.annotations['backstage.io/kubernetes-label-selector']) {
-                if (versionGreatThan(clusterVersion,'0.4.40')) {
+                if (versionGreaterThan(clusterVersion,'0.4.40')) {
                     let escapedLabelSelector = encodeURIComponent(entity.metadata.annotations['backstage.io/kubernetes-label-selector'])
                     queryUrl=url+`/managecluster/find?labelselector=${escapedLabelSelector}&type=pod&data=containers`
                 }
@@ -317,6 +318,13 @@ async function createRouter(options: KwirthRouterOptions) : Promise<express.Rout
     }
 
     // this is and API endpoint controller
+    const processInfo = async (_req:any, res:any) => {
+        res.status(200).send(
+            KwirthStaticData.latestVersions
+        )
+    }
+
+    // this is and API endpoint controller
     const processAccess = async (req:express.Request, res:express.Response) => {
         if (!req.query['scopes'] || !req.query['channel']) {
             res.status(400).send(`'scopes' and 'channel' are required`)
@@ -377,6 +385,10 @@ async function createRouter(options: KwirthRouterOptions) : Promise<express.Rout
 
     router.get(['/version'], (req, res) => {
         processVersion(req,res)
+    })
+
+    router.get(['/info'], (req, res) => {
+        processInfo(req,res)
     })
 
     return router

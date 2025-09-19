@@ -26,13 +26,13 @@ import { ClusterTypeEnum, InstanceMessageChannelEnum, KwirthData, versionGreatOr
  * @param logger Logger service
  */
 const loadNamespacePermissions = (channelConfig:Config, logger:LoggerService):KwirthNamespacePermissions[] => {
-    var namespacePermissions:KwirthNamespacePermissions[] = []
+    let namespacePermissions:KwirthNamespacePermissions[] = []
     if (channelConfig.has('namespacePermissions')) {
         logger.info(`  Namespace permisson evaluation will be performed.`)
-        var permNamespaces= (channelConfig.getOptionalConfigArray('namespacePermissions'))!
-        for (var ns of permNamespaces) {
-            var namespace=ns.keys()[0]
-            var identityRefs=ns.getStringArray(namespace)
+        let permNamespaces= (channelConfig.getOptionalConfigArray('namespacePermissions'))!
+        for (let ns of permNamespaces) {
+            let namespace=ns.keys()[0]
+            let identityRefs=ns.getStringArray(namespace)
             identityRefs=identityRefs.map(g => g.toLowerCase())
             namespacePermissions.push ({ namespace, identityRefs })
         }
@@ -51,21 +51,21 @@ const loadNamespacePermissions = (channelConfig:Config, logger:LoggerService):Kw
  * @returns an array of PodPermissionRule's
  */
 const loadPodRules = (config:Config, category:string):PodPermissionRule[] => {
-    var rules:PodPermissionRule[]=[]
-    for (var rule of config.getConfigArray(category)) {
-        var podsStringArray = rule.getOptionalStringArray('pods') || ['.*']
-        var podsRegexArray:RegExp[]=[]
-        for (var expr of podsStringArray) {
+    let rules:PodPermissionRule[]=[]
+    for (let rule of config.getConfigArray(category)) {
+        let podsStringArray = rule.getOptionalStringArray('pods') || ['.*']
+        let podsRegexArray:RegExp[]=[]
+        for (let expr of podsStringArray) {
             podsRegexArray.push(new RegExp(expr))
         }
 
-        var refsStringArray = rule.getOptionalStringArray('refs') || ['.*']
-        var refsRegexArray:RegExp[]=[]
-        for (var expr of refsStringArray) {
+        let refsStringArray = rule.getOptionalStringArray('refs') || ['.*']
+        let refsRegexArray:RegExp[]=[]
+        for (let expr of refsStringArray) {
             refsRegexArray.push(new RegExp(expr))
         }
 
-        var prr:PodPermissionRule={
+        let prr:PodPermissionRule={
             pods:podsRegexArray,
             refs:refsRegexArray
         }
@@ -81,13 +81,13 @@ const loadPodRules = (config:Config, category:string):PodPermissionRule[] => {
  * @returns an array of pod permissions
  */
 const loadPodPermissions = (channelConfig:Config, logger:LoggerService):KwirthPodPermissions[] => {
-    var clusterPodPermissions:KwirthPodPermissions[]=[]
+    let clusterPodPermissions:KwirthPodPermissions[]=[]
     if (channelConfig.has('podPermissions')) {
         logger.info(`  Pod permisson evaluation will be performed.`)
-        var namespaceList=channelConfig.getConfigArray('podPermissions')
-        for (var ns of namespaceList) {
-            var namespaceName=ns.keys()[0]
-            var podPermissions:KwirthPodPermissions={ namespace:namespaceName }
+        let namespaceList=channelConfig.getConfigArray('podPermissions')
+        for (let ns of namespaceList) {
+            let namespaceName=ns.keys()[0]
+            let podPermissions:KwirthPodPermissions={ namespace:namespaceName }
 
             if (ns.getConfig(namespaceName).has('allow')) {
                 podPermissions.allow=loadPodRules(ns.getConfig(namespaceName), 'allow')
@@ -126,7 +126,7 @@ const addChannelPermissions = (channel: string, logger:LoggerService, cluster:Co
 
     if (cluster.has(keyname)) {
         logger.info(`Load permissions for channel ${channel} (config: ${keyname}).`)
-        var configChannel=cluster.getConfig(keyname);
+        let configChannel=cluster.getConfig(keyname);
         if (configChannel.has('namespacePermissions')) {
             logger.info(`  Loading namespace permissions.`)
             kdata.namespacePermissions.set(channel, loadNamespacePermissions(configChannel, logger))
@@ -159,18 +159,18 @@ const addChannelPermissions = (channel: string, logger:LoggerService, cluster:Co
 const loadClusters = async (logger:LoggerService, config:RootConfigService) => {
     KwirthStaticData.clusterKwirthData.clear()
 
-    var locatingMethods=config.getConfigArray('kubernetes.clusterLocatorMethods')
-    for (var method of locatingMethods) {
+    let locatingMethods=config.getConfigArray('kubernetes.clusterLocatorMethods')
+    for (let method of locatingMethods) {
 
-      var clusters=(method.getConfigArray('clusters'))
-      for (var cluster of clusters) {
+      let clusters=(method.getConfigArray('clusters'))
+      for (let cluster of clusters) {
 
-        var name=cluster.getString('name')
+        let name=cluster.getString('name')
         if (cluster.has('kwirthHome') && cluster.has('kwirthApiKey')) {   
-            var kwirthHome:string = cluster.getOptionalString('kwirthHome')!
-            var kwirthApiKey:string = cluster.getOptionalString('kwirthApiKey')!
-            var title:string = (cluster.has('title')?cluster.getString('title'):'No name')
-            var kwirthClusterData:KwirthClusterData={
+            let kwirthHome:string = cluster.getOptionalString('kwirthHome')!
+            let kwirthApiKey:string = cluster.getOptionalString('kwirthApiKey')!
+            let title:string = (cluster.has('title')?cluster.getString('title'):'No name')
+            let kwirthClusterData:KwirthClusterData={
                 name,
                 kwirthHome,
                 kwirthApiKey,
@@ -278,11 +278,11 @@ const loadClusters = async (logger:LoggerService, config:RootConfigService) => {
                         ]
                     }                
                 */
-                var response = await fetch (kwirthClusterData.kwirthHome+'/config/info')
+                let response = await fetch (kwirthClusterData.kwirthHome+'/config/info')
                 try {
-                    var data = await response.text()
+                    let data = await response.text()
                     try {
-                        var kwirthData = JSON.parse(data) as KwirthData
+                        let kwirthData = JSON.parse(data) as KwirthData
                         logger.info(`Kwirth info at cluster '${kwirthClusterData.name}': ${JSON.stringify(kwirthData)}`)
                         kwirthClusterData.kwirthData=kwirthData
                         if (versionGreatOrEqualThan(kwirthData.version, MIN_KWIRTH_VERSION)) {
@@ -336,13 +336,34 @@ const loadClusters = async (logger:LoggerService, config:RootConfigService) => {
     }
 
     logger.info('Kwirth static data has been set including following clusters:')
-    for (var c of KwirthStaticData.clusterKwirthData.keys()) {
+    for (let c of KwirthStaticData.clusterKwirthData.keys()) {
         logger.info ('  '+c)
     }
-    for (var c of KwirthStaticData.clusterKwirthData.keys()) {
+    for (let c of KwirthStaticData.clusterKwirthData.keys()) {
         console.log(KwirthStaticData.clusterKwirthData.get(c))
     }
 
 }
 
-export { loadClusters }
+const loadKwirthInfo = async (logger:LoggerService) => {
+    try {
+        let pkb = await (await fetch ('https://registry.npmjs.org/@jfvilas/plugin-kwirth-backend')).json() as any
+        let pkl = await (await fetch ('https://registry.npmjs.org/@jfvilas/plugin-kwirth-log')).json() as any
+        let pkm = await (await fetch ('https://registry.npmjs.org/@jfvilas/plugin-kwirth-metrics')).json() as any
+        let hubResp = await (await fetch ('https://hub.docker.com/v2/repositories/jfvilasoutlook/kwirth/tags?page_size=25&page=1&ordering=last_updated&name=')).json() as any
+        KwirthStaticData.latestVersions = {
+            ['plugin-kwirth-backend']: pkb['dist-tags'].latest,
+            ['plugin-kwirth-log']: pkl['dist-tags'].latest,
+            ['plugin-kwirth-metrics']: pkm['dist-tags'].latest,
+            kwirth: hubResp.results[0].name
+        }
+        logger.info('Latest Kwirth-related artifacts versions are:')
+        logger.info(JSON.stringify(KwirthStaticData.latestVersions))
+    }
+    catch (err) {
+        console.log(err)
+        logger.warn("Oops! We couldn't fetch the latest version info. Don't worry — it's not critical. Kwirth's still here for you.")
+    }
+}
+
+export { loadClusters, loadKwirthInfo }
