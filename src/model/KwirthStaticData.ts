@@ -1,6 +1,5 @@
 import { IBackendInfo } from '@jfvilas/plugin-kwirth-common'
 import { KwirthClusterData } from './KwirthClusterData'
-import { VERSION } from '..'
 
 /*
 Copyright 2024 Julio Fernandez
@@ -24,4 +23,4 @@ class KwirthStaticData {
     public static latestVersions : IBackendInfo
 }
 
-export { KwirthStaticData, VERSION, MIN_KWIRTH_VERSION }
+export { KwirthStaticData, MIN_KWIRTH_VERSION }

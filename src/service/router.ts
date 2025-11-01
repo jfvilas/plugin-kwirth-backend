@@ -23,9 +23,10 @@ import { FetchApi } from '@backstage/core-plugin-api'
 // Kwirth
 import { ANNOTATION_BACKSTAGE_KUBERNETES_LABELSELECTOR, ClusterValidPods, MetricDefinition, PodData } from '@jfvilas/plugin-kwirth-common'
 import { loadClusters, loadKwirthInfo } from './config'
-import { KwirthStaticData, VERSION } from '../model/KwirthStaticData'
+import { KwirthStaticData } from '../model/KwirthStaticData'
 import { checkNamespaceAccess, checkPodAccess, getPodPermissionSet } from './permissions'
 import { accessKeySerialize, InstanceConfigScopeEnum, versionGreaterThan } from '@jfvilas/kwirth-common'
+import { VERSION } from '../version'
 
 export type KwirthRouterOptions = {
     discoverySvc: DiscoveryService
@@ -169,13 +170,13 @@ async function createRouter(options: KwirthRouterOptions) : Promise<express.Rout
                 }
                 else {
                     loggerSvc.error(`Version ${clusterVersion} from cluster ${clusterName} is not valid for using ${ANNOTATION_BACKSTAGE_KUBERNETES_LABELSELECTOR}`)
-                    clusterList.push({ name: clusterName, url, title, data:[], accessKeys:new Map() })
+                    clusterList.push({ name: clusterName, url, title, pods:[], accessKeys:new Map() })
                     continue
                 }
             }
             else {
                 loggerSvc.error('Received request without labelid/labelselector')
-                clusterList.push({ name: clusterName, url, title, data:[], accessKeys:new Map() })
+                clusterList.push({ name: clusterName, url, title, pods:[], accessKeys:new Map() })
                 continue
             }
 
@@ -185,26 +186,26 @@ async function createRouter(options: KwirthRouterOptions) : Promise<express.Rout
                     let jsonResp=await fetchResp.json()
                     if (jsonResp) {
                         let podData:ClusterValidPods = {
-                            name: clusterName, url, title, data: jsonResp, accessKeys: new Map()
+                            name: clusterName, url, title, pods: jsonResp, accessKeys: new Map()
                         }
                         clusterList.push(podData)
                     }
                     else {
                         loggerSvc.warn(`Invalid data received from cluster ${clusterName}`)
-                        clusterList.push({ name: clusterName, url, title, data:[], accessKeys:new Map() })
+                        clusterList.push({ name: clusterName, url, title, pods:[], accessKeys:new Map() })
                     }
                 }
                 else {
                     loggerSvc.warn(`Invalid response from cluster ${clusterName}: ${fetchResp.status}`)
                     let text = await fetchResp.text()
                     if (text) loggerSvc.warn(text)
-                    clusterList.push({ name: clusterName, url, title, data:[], accessKeys:new Map() })
+                    clusterList.push({ name: clusterName, url, title, pods:[], accessKeys:new Map() })
                 }
 
             }
             catch (err) {
                 loggerSvc.warn(`Cannot access cluster ${clusterName} (URL: ${queryUrl}): ${err}`)
-                clusterList.push({ name: clusterName, url, title, data:[], accessKeys:new Map() })
+                clusterList.push({ name: clusterName, url, title, pods:[], accessKeys:new Map() })
             }
         }
 
@@ -255,7 +256,7 @@ async function createRouter(options: KwirthRouterOptions) : Promise<express.Rout
             }
 
             // for each pod we've found on the cluster we check all namespace permissions
-            for (let podData of foundCluster.data) {
+            for (let podData of foundCluster.pods) {
                 // first we check if user is allowed to acccess namespace
                 let allowedToNamespace = checkNamespaceAccess(channel, foundCluster, podData, userEntityRef, userGroups)
 
