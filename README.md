@@ -11,13 +11,16 @@ This [Backstage]((https://backstage.io)) backend plugin is primarily responsible
 - Performing login processes to remote Kwirth instances, and thus obtaining valid API keys for users to stream kubernetes data.
 - Receiving and answering API calls from configured frontend Kwirth plugins on your Backstage instance.
 
+
 ## Version compatibility
 Following table shows version compatibility between Kwirth Backstage plugin and Kwirth Core server.
 
 | Plugin Kwirth version | Kwirth version |
 |-|-|
+|0.13.0|0.4.131|
 |0.12.8|0.4.45|
 |0.12.6|0.4.20|
+
 
 ## Install plugin
 Here we show how to get this backend plugin up and running quickly. First we need to add the `@jfvilas/plugin-kwirth-backend` package to your Backstage project:
@@ -41,6 +44,7 @@ Next, you need to modify your backend index file for starting Kwirth backend plu
 
     backend.start();
 ```
+
 
 ## Configure
 To have your Kwirth backend plugins ready for work you must perform some previous additional tasks, like deploying Kwirth, creating API Keys, defining clusters, etc... In this section we cover all these needs in a structured way.
