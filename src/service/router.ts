@@ -184,6 +184,8 @@ async function createRouter(options: KwirthRouterOptions) : Promise<express.Rout
                 let fetchResp = await fetch (queryUrl, {headers:{'Authorization':'Bearer '+apiKeyStr}})
                 if (fetchResp.status===200) {
                     let jsonResp=await fetchResp.json()
+                    console.log('jsonResp')
+                    console.log(jsonResp)
                     if (jsonResp) {
                         let podData:ClusterValidPods = {
                             name: clusterName, url, title, pods: jsonResp, accessKeys: new Map()

@@ -321,6 +321,7 @@ const loadClusters = async (logger:LoggerService, config:RootConfigService) => {
             if (enableCluster) {
                 [ InstanceMessageChannelEnum.LOG, 
                   InstanceMessageChannelEnum.ALERT,
+                  'fileman',
                   InstanceMessageChannelEnum.METRICS
                 ].map (channel => addChannelPermissions(channel,logger, cluster, kwirthClusterData))
                 KwirthStaticData.clusterKwirthData.set(name, kwirthClusterData)
